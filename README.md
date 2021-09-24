@@ -5,8 +5,9 @@
 # 功能
 
 1. 该插件可用来拉取网络上的m3u8文件并解析后转换成其他协议
-2. 该插件可以在服务器写HLS文件，配合nginx等可以提供HLS的服务
-3. 配合gateway插件可以直接访问http://localhost:8081/hls/live/user1.m3u8 进行播放，其中8081端口是gateway插件配置的，live/user1是streamPath，需要根据实际情况修改
+2. 该插件可以在服务器写HLS文件，配合nginx等可以提供HLS的服务，一般是在nginx中发布resource（默认配置）目录
+3. 配合gateway插件可以直接访问http://localhost:8080/hls/live/user1.m3u8 进行播放，其中8080端口是gateway插件配置的，live/user1是streamPath，需要根据实际情况修改
+4. 支持录像回放，按天保存文件，配合gateway插件可以直接访问http://localhost:8080/hls/live/user1/210923/record.m3u8 进行回放，其中8080端口是gateway插件配置的，live/user1是streamPath，210923是YYMMDD格式的日期，需要根据实际情况修改
 
 # API
 > 参数是可变的，下面的参数live/hls是作为例子，不是固定的

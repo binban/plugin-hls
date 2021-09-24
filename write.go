@@ -3,10 +3,10 @@ package hls
 import (
 	"bytes"
 	"container/ring"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync"
 	"time"
 
@@ -59,7 +59,7 @@ func writeHLS(r *Stream) {
 	hls_path := filepath.Join(config.Path, r.StreamPath)
 	hls_m3u8_name := hls_path + ".m3u8"
 	os.MkdirAll(hls_path, 0755)
-	if err = hls_playlist.Init(hls_m3u8_name); err != nil {
+	if err = hls_playlist.Init(hls_m3u8_name, false); err != nil {
 		log.Println(err)
 		return
 	}
@@ -75,10 +75,25 @@ func writeHLS(r *Stream) {
 			if int64(ts-vwrite_time) >= hls_fragment {
 				//fmt.Println("time :", video.Timestamp, tsSegmentTimestamp)
 
-				tsFilename := strconv.FormatInt(time.Now().Unix(), 10) + ".ts"
+				timeNow := time.Now()
+				time1 := timeNow.Format("060102")         //yyMMdd
+				tsFilename := timeNow.Format("150405.ts") //HHmmss
+				hls_path_day := filepath.Join(hls_path, time1)
+				os.MkdirAll(hls_path_day, 0755)
+
+				//创建回放的点播文件
+				hls_m3u8_record := filepath.Join(hls_path_day, "record.m3u8")
+				if _, errA := os.Stat(hls_m3u8_record); os.IsNotExist(errA) {
+					if errB := hls_playlist.Init(hls_m3u8_record, true); errB != nil {
+						log.Printf("创建点播文件失败%s。", hls_m3u8_record)
+						log.Println(errB)
+					}
+				}
+
+				//tsFilename := strconv.FormatInt(time.Now().Unix(), 10) + ".ts"
 
 				tsData := hls_segment_data.Bytes()
-				tsFilePath := filepath.Join(hls_path, tsFilename)
+				tsFilePath := filepath.Join(hls_path_day, tsFilename)
 				if config.EnableWrite {
 					if err = writeHlsTsSegmentFile(tsFilePath, tsData); err != nil {
 						return
@@ -93,7 +108,7 @@ func writeHLS(r *Stream) {
 				}
 				inf := PlaylistInf{
 					Duration: float64((ts - vwrite_time) / 1000),
-					Title:    filepath.Base(hls_path) + "/" + tsFilename,
+					Title:    fmt.Sprintf("%s/%s/%s", filepath.Base(hls_path), time1, tsFilename),
 				}
 
 				if hls_segment_count >= uint32(config.Window) {
@@ -105,6 +120,10 @@ func writeHLS(r *Stream) {
 						return
 					}
 				}
+
+				//写入点播文件
+				inf.Title = tsFilename
+				_ = hls_playlist.WriteInf(hls_m3u8_record, inf)
 
 				hls_segment_count++
 				vwrite_time = ts

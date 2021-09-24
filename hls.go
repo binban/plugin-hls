@@ -47,7 +47,7 @@ type PlaylistInf struct {
 	Title    string
 }
 
-func (this *Playlist) Init(filename string) (err error) {
+func (this *Playlist) Init(filename string, isRecord bool) (err error) {
 	defer this.handleError()
 
 	if utils.Exist(filename) {
@@ -76,12 +76,13 @@ func (this *Playlist) Init(filename string) (err error) {
 		"#EXT-X-VERSION:%d\n"+
 		"#EXT-X-MEDIA-SEQUENCE:%d\n"+
 		"#EXT-X-TARGETDURATION:%d\n", this.Version, this.Sequence, this.Targetduration)
+	if isRecord {
+		ss += "#EXT-X-ENDLIST\n"
+	}
 
 	if _, err = file.WriteString(ss); err != nil {
 		return
 	}
-
-	file.Close()
 
 	return
 }
@@ -102,8 +103,6 @@ func (this *Playlist) WriteInf(filename string, inf PlaylistInf) (err error) {
 	if _, err = file.WriteString(ss); err != nil {
 		return
 	}
-
-	file.Close()
 
 	return
 }
